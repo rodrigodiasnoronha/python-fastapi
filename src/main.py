@@ -1,12 +1,19 @@
+from datetime import timedelta
 from fastapi import FastAPI, status, Response
-from ormar import models
-from starlette.status import HTTP_400_BAD_REQUEST
+from fastapi.exceptions import HTTPException
+from fastapi.param_functions import Depends
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
-from models import Produto
-from services import produto_service, github_service
-from schemas import ProdutoSchema
+from models import Produto, Usuario
+from services import produto_service, github_service, usuario_service, auth_service
+from schemas import ProdutoSchema, UsuarioSchema, LoginSchema
 
+from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
+from functions import auth_functions
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app  = FastAPI()
 
@@ -35,3 +42,24 @@ async def atualizar_produto(produto: ProdutoSchema):
 @app.get('/github/{username}')
 async def get_usuario_github(username: str):
     return await github_service.get_usuario_github_by_username(username)
+
+
+@app.post('/usuarios', status_code= status.HTTP_201_CREATED)
+async def post_criar_usuario(usuario: UsuarioSchema, response: Response):
+    return await usuario_service.criar_usuario(usuario, response)
+
+@app.get('/usuarios')
+async def get_usuarios():
+    return await usuario_service.get_usuarios()
+
+@app.post('/login')
+async def post_login(form_data: OAuth2PasswordRequestForm = Depends() ):
+    return await auth_service.login(form_data)
+
+@app.post('/token')
+async def get_usuario_by_token(usuarioLogado: Usuario = Depends(auth_functions.get_current_user)):
+    return usuarioLogado
+
+@app.get('/usuario-logado')
+async def get_usuario_logado(usuarioLogado: Usuario = Depends(auth_functions.get_current_user)):
+    return await auth_service.get_usuario_logado(usuarioLogado)
