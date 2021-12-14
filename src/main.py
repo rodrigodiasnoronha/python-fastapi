@@ -1,6 +1,4 @@
-from datetime import timedelta
 from fastapi import FastAPI, status, Response
-from fastapi.exceptions import HTTPException
 from fastapi.param_functions import Depends
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
@@ -22,10 +20,9 @@ app  = FastAPI()
 def root():
     return {  "Olá": "Mundo" }
 
-
 @app.post('/produtos', status_code=status.HTTP_201_CREATED)
-async def post_criar_produto(response: Response, produto: Produto):
-    return await produto_service.criar_produto(produto)
+async def post_criar_produto(response: Response, produto: Produto, usuario: Usuario = Depends(auth_functions.get_current_user)):
+    return await produto_service.criar_produto(produto, usuario)
 
 @app.get('/produtos')
 async def get_produtos():
@@ -42,7 +39,6 @@ async def atualizar_produto(produto: ProdutoSchema):
 @app.get('/github/{username}')
 async def get_usuario_github(username: str):
     return await github_service.get_usuario_github_by_username(username)
-
 
 @app.post('/usuarios', status_code= status.HTTP_201_CREATED)
 async def post_criar_usuario(usuario: UsuarioSchema, response: Response):
@@ -63,3 +59,7 @@ async def get_usuario_by_token(usuarioLogado: Usuario = Depends(auth_functions.g
 @app.get('/usuario-logado')
 async def get_usuario_logado(usuarioLogado: Usuario = Depends(auth_functions.get_current_user)):
     return await auth_service.get_usuario_logado(usuarioLogado)
+
+@app.get('/produtos-by-user-id/{id}')
+async def get_produtos_by_user(id: int):
+    return await produto_service.get_produtos_by_user(id)
