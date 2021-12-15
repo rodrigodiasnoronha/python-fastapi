@@ -22,3 +22,11 @@ async def atualizar_produto(produto: ProdutoSchema):
 async def get_produtos_by_user(user_id: int):
     user = await Usuario.objects.filter(id = user_id).select_related('produtos').get()
     return user
+
+async def delete_produto(produto_id: int):
+    p = await Produto.objects.filter(id = produto_id).get()
+    await p.delete()
+    return True
+
+async def atualizar_produto(produto: Produto):
+    return await produto.save()
